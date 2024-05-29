@@ -131,7 +131,7 @@ def collate_fn_nlpcc(batch, max_seq_lenght=256,tokenizer=None):
         truncation=True)
     seq = torch.tensor(tokens['input_ids'])
     mask = torch.tensor(tokens['attention_mask'])
-    labels = torch.tensor(batch_labels,dtype=torch.float32)
+    labels = torch.tensor(batch_labels,dtype=torch.long)
     return seq, mask, labels
 
 

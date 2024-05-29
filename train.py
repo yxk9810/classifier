@@ -24,7 +24,7 @@ parser.add_argument("--hidden_size", default=768, type=int, help="")
 parser.add_argument("--seed", default=42, type=int, help="")
 parser.add_argument("--batch_size", default=32, type=int, help="")
 parser.add_argument("--epochs", default=5, type=int, help="")
-parser.add_argument("--class_nume",default=2,type=int,help="please inpu class num ")
+parser.add_argument("--class_num",default=2,type=int,help="please inpu class num ")
 parser.add_argument("--learning_rate", default=3e-5, type=float, help="")
 
 

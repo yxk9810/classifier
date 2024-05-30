@@ -146,7 +146,7 @@ tokenizer = AutoTokenizer.from_pretrained(config.pretrain_model_path)
 dataset = NLPCCTaskDataSet(filepath=config.train_file,mini_test=False)
 train_data_loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=True)
 dev_dataset = NLPCCTaskDataSet(filepath=config.dev_file,mini_test=False,is_test=False)
-dev_data_loader =  DataLoader(dev_dataset, batch_size=16, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
+dev_data_loader =  DataLoader(dev_dataset, batch_size=4, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
 
 best_valid_loss = float('inf')
 best_f1 =0.0
@@ -164,7 +164,7 @@ for epoch in range(config.epoch):
 model.load_state_dict(torch.load('model_weights.pth'))
 
 test_dataset = NLPCCTaskDataSet(filepath=config.test_file,mini_test=False,is_test=False)
-test_data_loader =  DataLoader(test_dataset, batch_size=64, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
+test_data_loader =  DataLoader(test_dataset, batch_size=4, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
 golds,preds = test(model,test_data_loader)
 from sklearn.metrics import classification_report
 print(classification_report(golds,[int(p) for p in preds]))

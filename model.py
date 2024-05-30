@@ -16,7 +16,7 @@ class BertClassifier(nn.Module):
         self.config = config
         self.bert = AutoModel.from_pretrained(pretrained_model_name_or_path=config.pretrain_model_path)
         self.dropout = nn.Dropout(0.2)
-        self.cls_layer1 = nn.Linear(config.hidden_size, 2)
+        self.cls_layer1 = nn.Linear(config.hidden_size, config.class_num)
 
     def forward(self, input_ids=None, attention_mask=None):
         bert_output = self.bert(input_ids=input_ids, attention_mask=attention_mask)

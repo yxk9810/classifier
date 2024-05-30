@@ -40,8 +40,6 @@ class Config:
     learning_rate = args.learning_rate
     class_num = args.class_num 
     epoch = args.epochs
-    train_file = args.train_file
-    dev_file = args.dev_file 
     test_file = args.test_file
     target_dir = './models/'
     use_fgm = False

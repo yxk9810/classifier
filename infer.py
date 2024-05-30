@@ -51,12 +51,13 @@ from transformers import AdamW
 config = Config()
 import numpy as np
 from sklearn.metrics import f1_score
+from tqdm import tqdm 
 def test(model, dev_data_loader):
     model.eval()
     gold_like = []
     pred_like = []
     with torch.no_grad():
-        for step, batch in enumerate(dev_data_loader):
+        for step, batch in tqdm(enumerate(dev_data_loader)):
             sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
             logits_like = model(sent_id, mask)
             preds =torch.argmax(torch.softmax(logits_like,dim=-1),dim=-1).detach().cpu().numpy()

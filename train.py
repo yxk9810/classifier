@@ -108,6 +108,7 @@ def test(model, dev_data_loader):
     model.eval()
     gold_like = []
     pred_like = []
+    probs = [] 
     with torch.no_grad():
         for step, batch in enumerate(dev_data_loader):
             sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
@@ -115,8 +116,9 @@ def test(model, dev_data_loader):
             preds =torch.argmax(torch.softmax(logits_like,dim=-1),dim=-1).detach().cpu().numpy()
             gold = batch[2].detach().cpu().numpy()
             gold_like.extend(gold.tolist())
+            probs.extend(torch.softmax(logits_like,dim=-1).detach().numpy().cpu().numpy().tolist())
             pred_like.extend(preds.tolist())
-    return gold_like, pred_like
+    return gold_like, pred_like,probs
 
 def collate_fn_nlpcc(batch, max_seq_lenght=256,tokenizer=None):
     batch_data = []
@@ -165,7 +167,7 @@ model.load_state_dict(torch.load('model_weights.pth'))
 
 test_dataset = NLPCCTaskDataSet(filepath=config.test_file,mini_test=False,is_test=False)
 test_data_loader =  DataLoader(test_dataset, batch_size=4, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
-golds,preds = test(model,test_data_loader)
+golds,preds,probs = test(model,test_data_loader)
 from sklearn.metrics import classification_report
 print(classification_report(golds,[int(p) for p in preds]))
 import os
@@ -173,7 +175,8 @@ if os.path.exists(args.output_filename):
     os.remove(args.output_filename)
 import json 
 writer = open(args.output_filename,'a+',encoding='utf-8')
-for pred,t in zip(preds,test_dataset.dataset):
-    t['pred'] = pred 
+for pred,prob,t in zip(preds,probs,test_dataset.dataset):
+    t['pred'] = pred
+    t['prob'] = prob 
     writer.write(json.dumps(t,ensure_ascii=False)+'\n')
 writer.close()

@@ -116,7 +116,7 @@ def test(model, dev_data_loader):
             preds =torch.argmax(torch.softmax(logits_like,dim=-1),dim=-1).detach().cpu().numpy()
             gold = batch[2].detach().cpu().numpy()
             gold_like.extend(gold.tolist())
-            probs.extend(torch.softmax(logits_like,dim=-1).detach().numpy().cpu().numpy().tolist())
+            probs.extend(torch.softmax(logits_like,dim=-1).detach().cpu().numpy().tolist())
             pred_like.extend(preds.tolist())
     return gold_like, pred_like,probs
 

@@ -100,7 +100,7 @@ def evaluate(model, dev_data_loader,device):
     golds = [int(d) for d in gold_like]
     preds = [int(p) for p in pred_like]
     print(classification_report(golds,preds))
-    accuracy = f1_score(golds,preds)
+    accuracy = f1_score(golds,preds,average='macro')
     return avg_loss, accuracy
 
 

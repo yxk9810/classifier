@@ -43,7 +43,7 @@ torch.backends.cudnn.deterministic = True
 
 device = torch.device('cuda' if args.device=='cuda' else 'cpu')
 from accelerate import DistributedDataParallelKwargs
-accelerator = Accelerator(kwargs_handlers=DistributedDataParallelKwargs(find_unused_parameters=True))
+accelerator = Accelerator(kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)])
 # accelerator = Accelerator()
 
 class Config:

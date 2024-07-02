@@ -43,7 +43,7 @@ torch.backends.cudnn.deterministic = True
 
 device = torch.device('cuda' if args.device=='cuda' else 'cpu')
 from accelerate import DistributedDataParallelKwargs
-accelerator = Accelerator(kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)])
+accelerator = Accelerator(kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)],mixed_precision="fp16")
 # accelerator = Accelerator()
 
 class Config:
@@ -58,7 +58,7 @@ class Config:
     target_dir = './models/'
     use_fgm = False
     use_cls = args.pooling=='cls'
-    use_accelerate = False 
+    use_accelerate = True 
 
 import time
 now_time = time.strftime("%Y%m%d%H", time.localtime())
@@ -68,7 +68,10 @@ def train(model, train_data_loader,device,optimizer,fgm=None):
     model.train()
     total_loss, total_accuracy = 0, 0
     for step, batch in enumerate(tqdm(train_data_loader)):
-        sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
+        if config.use_accelerate:
+            sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
+        else:
+            sent_id, mask, like_labels = batch[0], batch[1], batch[2]
         model.zero_grad()
         logits_like = model(sent_id, mask)
         loss_fn =  nn.CrossEntropyLoss()

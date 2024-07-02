@@ -87,7 +87,7 @@ def evaluate(model, dev_data_loader,device):
     gold_like = []
     pred_like = []
     for step, batch in enumerate(dev_data_loader):
-        sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
+        sent_id, mask, like_labels = batch[0], batch[1], batch[2]
         logits_like = model(sent_id, mask)
         loss_fn =  nn.CrossEntropyLoss()
         loss = loss_fn(logits_like, like_labels)
@@ -113,7 +113,7 @@ def test(model, dev_data_loader):
     probs = [] 
     with torch.no_grad():
         for step, batch in enumerate(dev_data_loader):
-            sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
+            sent_id, mask, like_labels = batch[0], batch[1], batch[2]
             logits_like = model(sent_id, mask)
             preds =torch.argmax(torch.softmax(logits_like,dim=-1),dim=-1).detach().cpu().numpy()
             gold = batch[2].detach().cpu().numpy()

@@ -58,6 +58,7 @@ class Config:
     target_dir = './models/'
     use_fgm = False
     use_cls = args.pooling=='cls'
+    use_accelerate = False 
 
 import time
 now_time = time.strftime("%Y%m%d%H", time.localtime())
@@ -67,13 +68,15 @@ def train(model, train_data_loader,device,optimizer,fgm=None):
     model.train()
     total_loss, total_accuracy = 0, 0
     for step, batch in enumerate(tqdm(train_data_loader)):
-        sent_id, mask, like_labels = batch[0], batch[1], batch[2]
+        sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
         model.zero_grad()
         logits_like = model(sent_id, mask)
         loss_fn =  nn.CrossEntropyLoss()
         loss = loss_fn(logits_like, like_labels)
-        #loss.backward()
-        accelerator.backward(loss)
+        if not config.use_accelerate:
+            loss.backward()
+        else:
+            accelerator.backward(loss)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         loss_item = loss.item()
@@ -115,7 +118,7 @@ def test(model, dev_data_loader):
     probs = [] 
     with torch.no_grad():
         for step, batch in enumerate(dev_data_loader):
-            sent_id, mask, like_labels = batch[0], batch[1], batch[2]
+            sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
             logits_like = model(sent_id, mask)
             preds =torch.argmax(torch.softmax(logits_like,dim=-1),dim=-1).detach().cpu().numpy()
             gold = batch[2].detach().cpu().numpy()
@@ -146,7 +149,7 @@ from transformers import AutoTokenizer
 model = BertClassifier(config)
 optimizer = AdamW(model.parameters(), lr=config.learning_rate)
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# model.to(device)
+model.to(device)
 tokenizer = AutoTokenizer.from_pretrained(config.pretrain_model_path)
 
 dataset = NLPCCTaskDataSet(filepath=config.train_file,mini_test=False)
@@ -154,9 +157,9 @@ train_data_loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn =
 dev_dataset = NLPCCTaskDataSet(filepath=config.dev_file,mini_test=False,is_test=False)
 dev_data_loader =  DataLoader(dev_dataset, batch_size=4, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
 
-train_data_loader, dev_data_loader, model, optimizer = accelerator.prepare(
-    train_data_loader, dev_data_loader, model, optimizer
-)
+# train_data_loader, dev_data_loader, model, optimizer = accelerator.prepare(
+#     train_data_loader, dev_data_loader, model, optimizer
+# )
 
 best_valid_loss = float('inf')
 best_f1 =0.0
@@ -181,10 +184,10 @@ print(classification_report(golds,[int(p) for p in preds]))
 import os
 if os.path.exists(args.output_filename):
     os.remove(args.output_filename)
-import json 
-writer = open(args.output_filename,'a+',encoding='utf-8')
-for pred,prob,t in zip(preds,probs,test_dataset.dataset):
-    t['pred'] = pred
-    t['prob'] = prob 
-    writer.write(json.dumps(t,ensure_ascii=False)+'\n')
-writer.close()
+# import json 
+# writer = open(args.output_filename,'a+',encoding='utf-8')
+# for pred,prob,t in zip(preds,probs,test_dataset.dataset):
+#     t['pred'] = pred
+#     t['prob'] = prob 
+#     writer.write(json.dumps(t,ensure_ascii=False)+'\n')
+# writer.close()

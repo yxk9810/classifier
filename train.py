@@ -152,8 +152,8 @@ train_data_loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn =
 dev_dataset = NLPCCTaskDataSet(filepath=config.dev_file,mini_test=False,is_test=False)
 dev_data_loader =  DataLoader(dev_dataset, batch_size=4, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
 
-train_dataloader, eval_dataloader, model, optimizer = accelerator.prepare(
-    train_dataloader, dev_data_loader, model, optimizer
+train_data_loader, dev_data_loader, model, optimizer = accelerator.prepare(
+    train_data_loader, dev_data_loader, model, optimizer
 )
 
 best_valid_loss = float('inf')

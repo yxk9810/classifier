@@ -42,7 +42,9 @@ torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.deterministic = True
 
 device = torch.device('cuda' if args.device=='cuda' else 'cpu')
-accelerator = Accelerator()
+from accelerate import DistributedDataParallelKwargs
+accelerator = Accelerator(kwargs_handlers=DistributedDataParallelKwargs(find_unused_parameters=True)
+# accelerator = Accelerator()
 
 class Config:
     pretrain_model_path = args.model_name_or_path

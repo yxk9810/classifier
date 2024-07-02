@@ -10,6 +10,7 @@ from loss import FocalLoss
 from model import BertClassifier
 from dataset import NLPCCTaskDataSet
 import argparse
+from accelerate import Accelerator
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name_or_path", default="bert-base-chinese", type=str, help="")
@@ -40,8 +41,8 @@ np.random.seed(seed)
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.deterministic = True
 
-device = torch.device('cuda' if args.device=='cuda' else 'cpu')
-
+# device = torch.device('cuda' if args.device=='cuda' else 'cpu')
+accelerator = Accelerator()
 
 class Config:
     pretrain_model_path = args.model_name_or_path
@@ -64,12 +65,13 @@ def train(model, train_data_loader,device,optimizer,fgm=None):
     model.train()
     total_loss, total_accuracy = 0, 0
     for step, batch in enumerate(tqdm(train_data_loader)):
-        sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
+        sent_id, mask, like_labels = batch[0], batch[1], batch[2]
         model.zero_grad()
         logits_like = model(sent_id, mask)
         loss_fn =  nn.CrossEntropyLoss()
         loss = loss_fn(logits_like, like_labels)
-        loss.backward()
+        #loss.backward()
+        accelerator.backward(loss)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         loss_item = loss.item()
@@ -141,14 +143,18 @@ from functools import partial
 from transformers import AutoTokenizer
 model = BertClassifier(config)
 optimizer = AdamW(model.parameters(), lr=config.learning_rate)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# model.to(device)
 tokenizer = AutoTokenizer.from_pretrained(config.pretrain_model_path)
 
 dataset = NLPCCTaskDataSet(filepath=config.train_file,mini_test=False)
 train_data_loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=True)
 dev_dataset = NLPCCTaskDataSet(filepath=config.dev_file,mini_test=False,is_test=False)
 dev_data_loader =  DataLoader(dev_dataset, batch_size=4, collate_fn = partial(collate_fn_nlpcc,tokenizer=tokenizer), shuffle=False)
+
+train_dataloader, eval_dataloader, model, optimizer = accelerator.prepare(
+    train_dataloader, dev_data_loader, model, optimizer
+)
 
 best_valid_loss = float('inf')
 best_f1 =0.0

@@ -41,7 +41,7 @@ np.random.seed(seed)
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.deterministic = True
 
-# device = torch.device('cuda' if args.device=='cuda' else 'cpu')
+device = torch.device('cuda' if args.device=='cuda' else 'cpu')
 accelerator = Accelerator()
 
 class Config:

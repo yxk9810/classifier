@@ -19,7 +19,7 @@ parser.add_argument("--output_filename", default="test_pred_bert", type=str, hel
 parser.add_argument("--train_file",default="train_data",type=str,help="")
 parser.add_argument("--dev_file",default="dev_data",type=str,help="")
 parser.add_argument("--test_file",default="",type=str,help="")
-parser.add_argument("--device", default="cpu", type=str, help="")
+parser.add_argument("--device", default="cuda", type=str, help="")
 parser.add_argument("--pooling", default="cls", type=str, help="")
 parser.add_argument("--hidden_size", default=768, type=int, help="")
 parser.add_argument("--seed", default=42, type=int, help="")
@@ -42,8 +42,8 @@ torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.deterministic = True
 
 device = torch.device('cuda' if args.device=='cuda' else 'cpu')
-from accelerate import DistributedDataParallelKwargs
-accelerator = Accelerator(kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)],mixed_precision="fp16")
+# from accelerate import DistributedDataParallelKwargs
+# accelerator = Accelerator(kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)],mixed_precision="fp16")
 # accelerator = Accelerator()
 
 class Config:
@@ -58,7 +58,7 @@ class Config:
     target_dir = './models/'
     use_fgm = False
     use_cls = args.pooling=='cls'
-    use_accelerate = True 
+    use_accelerate = False 
 
 import time
 now_time = time.strftime("%Y%m%d%H", time.localtime())
@@ -95,7 +95,7 @@ def evaluate(model, dev_data_loader,device):
     gold_like = []
     pred_like = []
     for step, batch in enumerate(dev_data_loader):
-        sent_id, mask, like_labels = batch[0], batch[1], batch[2]
+        sent_id, mask, like_labels = batch[0].to(device), batch[1].to(device), batch[2].to(device)
         logits_like = model(sent_id, mask)
         loss_fn =  nn.CrossEntropyLoss()
         loss = loss_fn(logits_like, like_labels)
@@ -187,10 +187,10 @@ print(classification_report(golds,[int(p) for p in preds]))
 import os
 if os.path.exists(args.output_filename):
     os.remove(args.output_filename)
-# import json 
-# writer = open(args.output_filename,'a+',encoding='utf-8')
-# for pred,prob,t in zip(preds,probs,test_dataset.dataset):
-#     t['pred'] = pred
-#     t['prob'] = prob 
-#     writer.write(json.dumps(t,ensure_ascii=False)+'\n')
-# writer.close()
+import json 
+writer = open(args.output_filename,'a+',encoding='utf-8')
+for pred,prob,t in zip(preds,probs,test_dataset.dataset):
+    t['pred'] = pred
+    t['prob'] = prob 
+    writer.write(json.dumps(t,ensure_ascii=False)+'\n')
+writer.close()
